@@ -18,6 +18,18 @@
 
 # COMMAND ----------
 
+try:
+    spark
+except NameError:
+    from pyspark.sql import SparkSession
+
+    spark = (
+        SparkSession.builder
+        .master("local[*]")
+        .appName("ExemploSparkLocal")
+        .getOrCreate()
+    )
+
 CATALOG = "tesouro_direto"
 SCHEMA_BRONZE = "bronze"
 VOLUME_PATH = "/Volumes/tesouro_direto/bronze/arquivos_brutos"
