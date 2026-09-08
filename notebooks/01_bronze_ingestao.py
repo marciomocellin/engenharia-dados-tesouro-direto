@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # 01 - Bronze: Ingestão dos dados brutos do Tesouro Direto
 # MAGIC
@@ -33,7 +37,7 @@ except NameError:
 CATALOG = "tesouro_direto"
 SCHEMA_BRONZE = "bronze"
 VOLUME_PATH = "/Volumes/tesouro_direto/bronze/arquivos_brutos"
-ARQUIVO_ORIGEM = "PrecoTaxaTesouroDireto.csv"
+ARQUIVO_ORIGEM = "precotaxatesourodireto.csv"
 
 spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}")
@@ -74,6 +78,10 @@ df_bronze = (
 
 # COMMAND ----------
 
+df_bronze.display()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Adição de metadados de controle
 # MAGIC
@@ -90,8 +98,39 @@ df_bronze_final = (
 
 # COMMAND ----------
 
+df_bronze_final.display()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Gravação da tabela Bronze (Delta)
+
+# COMMAND ----------
+
+# DBTITLE 1,Remove tabela preco taxa tesouro direto se existir
+# spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto")
+
+# COMMAND ----------
+
+# DBTITLE 1,Cria a tabela se não existir
+# Cria a tabela se não existir
+spark.sql(f'''\n
+CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto (
+    Tipo_Titulo STRING,
+    Data_Vencimento STRING,
+    Data_Base STRING,
+    Taxa_Compra_Manha STRING,
+    Taxa_Venda_Manha STRING,
+    PU_Compra_Manha STRING,
+    PU_Venda_Manha STRING,
+    PU_Base_Manha STRING,
+    _ingestion_timestamp TIMESTAMP,
+    _source_file STRING
+)
+USING DELTA
+COMMENT 'A tabela contém dados sobre as taxas e preços dos títulos do Tesouro Direto. Os principais elementos incluem informações sobre o tipo de título, datas de vencimento e as taxas de compra e venda pela manhã.'
+PARTITIONED BY (_ingestion_timestamp)
+''')
 
 # COMMAND ----------
 
@@ -99,6 +138,7 @@ df_bronze_final = (
     df_bronze_final.write
     .format("delta")
     .mode("overwrite")
+    .option("delta.columnMapping.mode", "name")
     .saveAsTable(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto")
 )
 
