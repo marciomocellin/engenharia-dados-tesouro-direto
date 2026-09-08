@@ -46,6 +46,11 @@ spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}.arquivos_bruto
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC Foi criado um Volume (/Volumes/tesouro_direto/bronze/arquivos_brutos) para guardar o CSV, então adicionei o arquivo baixado do Tesouro Transparente.
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ## Leitura do CSV bruto
 # MAGIC
 # MAGIC O arquivo é disponibilizado com separador `;`, números com vírgula decimal e datas no
