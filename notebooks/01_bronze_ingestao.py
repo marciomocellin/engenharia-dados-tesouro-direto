@@ -17,11 +17,6 @@
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## Parâmetros
-
-# COMMAND ----------
-
 try:
     spark
 except NameError:
@@ -33,6 +28,14 @@ except NameError:
         .appName("ExemploSparkLocal")
         .getOrCreate()
     )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Parâmetros
+
+# COMMAND ----------
+
 
 CATALOG = "tesouro_direto"
 SCHEMA_BRONZE = "bronze"
@@ -134,15 +137,29 @@ CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto (
 )
 USING DELTA
 COMMENT 'A tabela contém dados sobre as taxas e preços dos títulos do Tesouro Direto. Os principais elementos incluem informações sobre o tipo de título, datas de vencimento e as taxas de compra e venda pela manhã.'
-PARTITIONED BY (_ingestion_timestamp)
+PARTITIONED BY (Tipo_Titulo, Data_Vencimento)
 ''')
 
 # COMMAND ----------
 
+# Rename columns to match the table schema (underscores instead of spaces)
+df_bronze_renamed = df_bronze_final.toDF(
+    "Tipo_Titulo",
+    "Data_Vencimento",
+    "Data_Base",
+    "Taxa_Compra_Manha",
+    "Taxa_Venda_Manha",
+    "PU_Compra_Manha",
+    "PU_Venda_Manha",
+    "PU_Base_Manha",
+    "_ingestion_timestamp",
+    "_source_file"
+)
+
 (
-    df_bronze_final.write
+    df_bronze_renamed.write
     .format("delta")
-    .mode("overwrite")
+    .mode("append")
     .option("delta.columnMapping.mode", "name")
     .saveAsTable(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto")
 )
