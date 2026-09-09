@@ -19,9 +19,9 @@
 
 # MAGIC %md
 # MAGIC # Proteção para execução em ambiente local
-# MAGIC #
-# MAGIC # Quando o notebook roda fora do Databricks, inicializamos manualmente uma sessão Spark
-# MAGIC # local para permitir validação e desenvolvimento em máquina pessoal.
+# MAGIC
+# MAGIC Quando o notebook roda fora do Databricks, inicializamos manualmente uma sessão Spark
+# MAGIC local para permitir validação e desenvolvimento em máquina pessoal.
 
 # COMMAND ----------
 
@@ -42,9 +42,9 @@ except NameError:
 
 # MAGIC %md
 # MAGIC ## Configuração dos parâmetros
-# MAGIC #
-# MAGIC # Definimos os nomes do catálogo, schema e volume usados para armazenar o dado bruto.
-# MAGIC # O volume atua como área de staging do arquivo original antes da etapa de limpeza.
+# MAGIC
+# MAGIC Definimos os nomes do catálogo, schema e volume usados para armazenar o dado bruto.
+# MAGIC O volume atua como área de staging do arquivo original antes da etapa de limpeza.
 
 # COMMAND ----------
 
@@ -127,9 +127,9 @@ df_bronze_final.display()
 
 # MAGIC %md
 # MAGIC ## Gravação da tabela Bronze em Delta
-# MAGIC #
-# MAGIC # A tabela Bronze preserva a estrutura original do CSV e registra os metadados de carga.
-# MAGIC # Essa camada funciona como o ponto de partida para os tratamentos da camada Silver.
+# MAGIC
+# MAGIC A tabela Bronze preserva a estrutura original do CSV e registra os metadados de carga.
+# MAGIC Essa camada funciona como o ponto de partida para os tratamentos da camada Silver.
 
 # COMMAND ----------
 
