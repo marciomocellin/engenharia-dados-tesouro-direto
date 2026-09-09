@@ -17,6 +17,12 @@
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC # Salvaguarda para execulção em ambiente local.
+
+# COMMAND ----------
+
+# DBTITLE 1,Initialize Spark Session for Local Development
 try:
     spark
 except NameError:
@@ -133,7 +139,8 @@ CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto (
     PU_Venda_Manha STRING,
     PU_Base_Manha STRING,
     _ingestion_timestamp TIMESTAMP,
-    _source_file STRING
+    _source_file STRING,
+    PRIMARY KEY (Tipo_Titulo, Data_Vencimento, Data_Base)
 )
 USING DELTA
 COMMENT 'A tabela contém dados sobre as taxas e preços dos títulos do Tesouro Direto. Os principais elementos incluem informações sobre o tipo de título, datas de vencimento e as taxas de compra e venda pela manhã.'
@@ -156,6 +163,40 @@ df_bronze_renamed = df_bronze_final.toDF(
     "_source_file"
 )
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Removendo as linhas que já existem na tabela
+# MAGIC
+# MAGIC Como o tesouro faz atualizanção incremental do CSV, então só precisaremos adicionar os novos dados a tabela .
+
+# COMMAND ----------
+
+# DBTITLE 1,Remove Duplicates Using Left Anti Join on Existing Data
+existing_df = spark.table(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto")
+
+# Realiza um LEFT ANTI JOIN para manter apenas as linhas que não existem na tabela
+df_bronze_renamed = df_bronze_renamed.join(
+    existing_df,
+    on=["Tipo_Titulo", "Data_Vencimento", "Data_Base"],
+    how="left_anti"
+)
+
+print(f"Total de registros novos (após remoção de duplicados): {df_bronze_renamed.count()}")
+
+# COMMAND ----------
+
+# DBTITLE 1,Display Renamed DataFrame for Analysis Insights
+df_bronze_renamed.display()
+
+# COMMAND ----------
+
+df_bronze_renamed.display()
+
+# COMMAND ----------
+
+# DBTITLE 1,Append Data to Bronze Preco Taxa Tesouro Direto Table
+
 (
     df_bronze_renamed.write
     .format("delta")
@@ -168,6 +209,7 @@ display(spark.table(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto").limi
 
 # COMMAND ----------
 
+# DBTITLE 1,Count of Records Loaded in Bronze Preco Taxa Tesouro Di ...
 print(
     "Total de registros carregados na Bronze:",
     spark.table(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto").count(),
