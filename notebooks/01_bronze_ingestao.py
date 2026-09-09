@@ -18,11 +18,14 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Salvaguarda para execulção em ambiente local.
+# MAGIC # Proteção para execução em ambiente local
+# MAGIC #
+# MAGIC # Quando o notebook roda fora do Databricks, inicializamos manualmente uma sessão Spark
+# MAGIC # local para permitir validação e desenvolvimento em máquina pessoal.
 
 # COMMAND ----------
 
-# DBTITLE 1,Initialize Spark Session for Local Development
+# DBTITLE 1,Inicializa a sessão Spark para desenvolvimento local
 try:
     spark
 except NameError:
@@ -38,7 +41,10 @@ except NameError:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Parâmetros
+# MAGIC ## Configuração dos parâmetros
+# MAGIC #
+# MAGIC # Definimos os nomes do catálogo, schema e volume usados para armazenar o dado bruto.
+# MAGIC # O volume atua como área de staging do arquivo original antes da etapa de limpeza.
 
 # COMMAND ----------
 
@@ -55,16 +61,18 @@ spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}.arquivos_bruto
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Foi criado um Volume (/Volumes/tesouro_direto/bronze/arquivos_brutos) para guardar o CSV, então adicionei o arquivo baixado do Tesouro Transparente.
+# MAGIC Foi criado um volume em `/Volumes/tesouro_direto/bronze/arquivos_brutos` para receber o CSV
+# MAGIC original do Tesouro Transparente. Nesse local, o arquivo bruto fica preservado antes de ser
+# MAGIC transformado na camada Silver.
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## Leitura do CSV bruto
 # MAGIC
-# MAGIC O arquivo é disponibilizado com separador `;`, números com vírgula decimal e datas no
-# MAGIC formato `dd/mm/aaaa`. Nesta camada Bronze, **nada é convertido**: todas as colunas são
-# MAGIC lidas como texto (`StringType`) para preservar fielmente o dado original.
+# MAGIC O arquivo da fonte usa separador `;`, números com vírgula decimal e datas no formato
+# MAGIC `dd/MM/yyyy`. Nesta camada Bronze, **não há transformação de negócio**: todas as colunas são
+# MAGIC lidas como texto (`StringType`) para preservar o conteúdo exatamente como foi recebido.
 
 # COMMAND ----------
 
@@ -99,8 +107,9 @@ df_bronze.display()
 # MAGIC %md
 # MAGIC ## Adição de metadados de controle
 # MAGIC
-# MAGIC - `_ingestion_timestamp`: quando o registro foi carregado no Lakehouse.
-# MAGIC - `_source_file`: nome do arquivo de origem, permitindo rastreabilidade.
+# MAGIC Esses campos reforçam a rastreabilidade da carga e ajudam a responder perguntas como:
+# MAGIC - `_ingestion_timestamp`: momento em que cada linha foi carregada no Lakehouse;
+# MAGIC - `_source_file`: nome do arquivo de origem, permitindo auditoria e reprocessamento.
 
 # COMMAND ----------
 
@@ -117,7 +126,10 @@ df_bronze_final.display()
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Gravação da tabela Bronze (Delta)
+# MAGIC ## Gravação da tabela Bronze em Delta
+# MAGIC #
+# MAGIC # A tabela Bronze preserva a estrutura original do CSV e registra os metadados de carga.
+# MAGIC # Essa camada funciona como o ponto de partida para os tratamentos da camada Silver.
 
 # COMMAND ----------
 
@@ -149,7 +161,7 @@ PARTITIONED BY (Tipo_Titulo, Data_Vencimento)
 
 # COMMAND ----------
 
-# Rename columns to match the table schema (underscores instead of spaces)
+# Renomeia as colunas para seguir o schema da tabela, usando underscores e padronização.
 df_bronze_renamed = df_bronze_final.toDF(
     "Tipo_Titulo",
     "Data_Vencimento",
@@ -166,16 +178,18 @@ df_bronze_renamed = df_bronze_final.toDF(
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Removendo as linhas que já existem na tabela
+# MAGIC # Remoção de registros já existentes
 # MAGIC
-# MAGIC Como o tesouro faz atualizanção incremental do CSV, então só precisaremos adicionar os novos dados a tabela .
+# MAGIC Como a fonte pode atualizar o CSV com dados incrementais, evitamos duplicar registros já
+# MAGIC carregados na tabela Bronze usando uma operação de anti-join por chave de negócio.
 
 # COMMAND ----------
 
-# DBTITLE 1,Remove Duplicates Using Left Anti Join on Existing Data
+# DBTITLE 1,Remove duplicatas usando left anti join
 existing_df = spark.table(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto")
 
-# Realiza um LEFT ANTI JOIN para manter apenas as linhas que não existem na tabela
+# Mantém apenas linhas que ainda não existem na tabela Bronze. Isso evita reprocessamento
+# e preserva a idempotência da ingestão.
 df_bronze_renamed = df_bronze_renamed.join(
     existing_df,
     on=["Tipo_Titulo", "Data_Vencimento", "Data_Base"],
@@ -186,7 +200,7 @@ print(f"Total de registros novos (após remoção de duplicados): {df_bronze_ren
 
 # COMMAND ----------
 
-# DBTITLE 1,Display Renamed DataFrame for Analysis Insights
+# DBTITLE 1,Exibe o DataFrame já renomeado para validação da estrutura
 df_bronze_renamed.display()
 
 # COMMAND ----------
@@ -195,8 +209,10 @@ df_bronze_renamed.display()
 
 # COMMAND ----------
 
-# DBTITLE 1,Append Data to Bronze Preco Taxa Tesouro Direto Table
-
+# DBTITLE 1,Carrega os dados novos na tabela Bronze
+#
+# A operação de append insere apenas os registros novos, mantendo o histórico bruto e
+# preservando o dado original recebido da fonte.
 (
     df_bronze_renamed.write
     .format("delta")
@@ -209,7 +225,7 @@ display(spark.table(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto").limi
 
 # COMMAND ----------
 
-# DBTITLE 1,Count of Records Loaded in Bronze Preco Taxa Tesouro Di ...
+# DBTITLE 1,Contagem final de registros carregados na camada Bronze
 print(
     "Total de registros carregados na Bronze:",
     spark.table(f"{CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto").count(),
