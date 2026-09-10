@@ -40,10 +40,6 @@ df_silver = spark.table(f"{CATALOG}.{SCHEMA_SILVER}.preco_taxa_tesouro_direto")
 
 # COMMAND ----------
 
-spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_titulo") # Caso queira limpar a tabela Bronze
-
-# COMMAND ----------
-
 # DBTITLE 1,Célula 5
 spark.sql(f"""
     CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_titulo (
@@ -54,7 +50,7 @@ spark.sql(f"""
     )
     USING DELTA
     COMMENT 'Dimensão de tipos de título do Tesouro Direto'
-    PARTITIONED BY (tipo_titulo)
+    PARTITIONED BY (indexador)
 """)
 
 # COMMAND ----------
@@ -76,7 +72,6 @@ dim_titulo = (
          .otherwise(F.lit("IPCA")),
     )
 )
-dim_titulo.display()
 
 # COMMAND ----------
 
@@ -100,6 +95,10 @@ display(spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo").limit(10))
 
 # COMMAND ----------
 
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_data") # Caso queira limpar a tabela Bronze
+
+# COMMAND ----------
+
 # DBTITLE 1,Célula 10
 spark.sql(f"""
     CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_data (
@@ -116,9 +115,19 @@ spark.sql(f"""
     COMMENT 'Dimensão de calendário com atributos temporais'
 """)
 
+# Filter to recent years when checking for existing dates to reduce partition scans
+current_year = F.year(F.current_date())
+existing_df = (
+    spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_data")
+    .filter(F.col("ano") >= current_year - 2)
+    .select("data")
+    .distinct()
+)
+
 dim_data = (
     df_silver.select(F.col("data_base").alias("data"))
     .distinct()
+    .join(existing_df, on=["data"], how="left_anti")
     .withColumn("ano", F.year("data"))
     .withColumn("mes", F.month("data"))
     .withColumn("trimestre", F.quarter("data"))
@@ -129,9 +138,20 @@ dim_data = (
 
 dim_data.createOrReplaceTempView("tmp_dim_data")
 spark.sql(f"""
-    INSERT OVERWRITE TABLE {CATALOG}.{SCHEMA_GOLD}.dim_data
+    INSERT INTO TABLE {CATALOG}.{SCHEMA_GOLD}.dim_data
     SELECT * FROM tmp_dim_data
 """)
+
+# COMMAND ----------
+
+# DBTITLE 1,Célula 12
+max_ano = spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_data").select(F.max("ano")).head()[0]
+display(
+    spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_data")
+    .filter(F.col("ano") == max_ano)
+    .orderBy(F.desc("data"))
+    .limit(10)
+)
 
 # COMMAND ----------
 
