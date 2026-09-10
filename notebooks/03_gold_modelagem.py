@@ -46,7 +46,8 @@ spark.sql(f"""
         sk_titulo BIGINT GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) COMMENT 'Chave substituta da dimensão título',
         tipo_titulo STRING COMMENT 'Nome completo do tipo de título do Tesouro Direto',
         indexador STRING COMMENT 'Indexador de rentabilidade: Selic, IPCA, Prefixado ou IGPM',
-        PRIMARY KEY (sk_titulo, tipo_titulo)
+        PRIMARY KEY (sk_titulo),
+        CONSTRAINT uk_tipo_titulo UNIQUE (tipo_titulo)
     )
     USING DELTA
     COMMENT 'Dimensão de tipos de título do Tesouro Direto'
@@ -92,10 +93,6 @@ display(spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo").limit(10))
 # MAGIC ## `dim_data`
 # MAGIC
 # MAGIC Dimensão de calendário derivada das datas base distintas presentes no conjunto de dados.
-
-# COMMAND ----------
-
-spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_data") # Caso queira limpar a tabela Bronze
 
 # COMMAND ----------
 
@@ -164,10 +161,14 @@ display(
 
 # COMMAND ----------
 
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria") # Caso queira limpar a tabela Bronze
+
+# COMMAND ----------
+
 # DBTITLE 1,Célula 12
 spark.sql(f"""
     CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria (
-        sk_titulo INT COMMENT 'Chave estrangeira para dim_titulo',
+        sk_titulo BIGINT COMMENT 'Chave estrangeira para dim_titulo',
         sk_data INT COMMENT 'Chave estrangeira para dim_data',
         data_vencimento DATE COMMENT 'Data de vencimento do título',
         prazo_dias INT COMMENT 'Prazo em dias entre data_base e data_vencimento',
@@ -176,34 +177,38 @@ spark.sql(f"""
         pu_compra_manha DECIMAL(18,6) COMMENT 'Preço unitário de compra na manhã',
         pu_venda_manha DECIMAL(18,6) COMMENT 'Preço unitário de venda na manhã',
         pu_base_manha DECIMAL(18,6) COMMENT 'Preço unitário base na manhã',
-        PRIMARY KEY (sk_titulo, sk_data, data_vencimento)
+        PRIMARY KEY (sk_titulo, sk_data, data_vencimento),
+        CONSTRAINT fk_fato_titulo FOREIGN KEY (sk_titulo) REFERENCES {CATALOG}.{SCHEMA_GOLD}.dim_titulo(sk_titulo),
+        CONSTRAINT fk_fato_data FOREIGN KEY (sk_data) REFERENCES {CATALOG}.{SCHEMA_GOLD}.dim_data(sk_data)
     )
     USING DELTA
-    PARTITIONED BY (sk_data)
+    PARTITIONED BY (sk_titulo)
     COMMENT 'Tabela fato com cotações diárias dos títulos do Tesouro Direto'
 """)
+existing_df = spark.table(f"{CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria").select("sk_titulo", "sk_data").distinct()
 
 fato_cotacao_diaria = (
     df_silver.alias("s")
-    .join(dim_titulo.alias("t"), on="tipo_titulo", how="left")
+    .join(spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo").alias("t"), on="tipo_titulo", how="left")
     .withColumn("sk_data", F.date_format(F.col("s.data_base"), "yyyyMMdd").cast("int"))
-    .withColumn("prazo_dias", F.datediff("data_vencimento", "data_base"))
+    .join(existing_df, on=["sk_titulo", "sk_data"], how="left_anti")
+    .withColumn("prazo_dias", F.datediff(F.col("s.data_vencimento"), F.col("s.data_base")))
     .select(
-        "sk_titulo",
+        F.col("t.sk_titulo").alias("sk_titulo"),
         "sk_data",
         F.col("s.data_vencimento").alias("data_vencimento"),
         "prazo_dias",
-        "taxa_compra_manha",
-        "taxa_venda_manha",
-        "pu_compra_manha",
-        "pu_venda_manha",
-        "pu_base_manha",
+        F.col("s.taxa_compra_manha").alias("taxa_compra_manha"),
+        F.col("s.taxa_venda_manha").alias("taxa_venda_manha"),
+        F.col("s.pu_compra_manha").alias("pu_compra_manha"),
+        F.col("s.pu_venda_manha").alias("pu_venda_manha"),
+        F.col("s.pu_base_manha").alias("pu_base_manha"),
     )
 )
 
 fato_cotacao_diaria.createOrReplaceTempView("tmp_fato_cotacao_diaria")
 spark.sql(f"""
-    INSERT OVERWRITE TABLE {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria
+    INSERT INTO TABLE {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria
     SELECT * FROM tmp_fato_cotacao_diaria
 """)
 
