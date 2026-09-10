@@ -48,6 +48,7 @@ except NameError:
 
 # COMMAND ----------
 
+# DBTITLE 1,Cria Catálogo e Esquema para Dados do Tesouro Direto
 
 CATALOG = "tesouro_direto"
 SCHEMA_BRONZE = "bronze"
@@ -76,6 +77,7 @@ spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA_BRONZE}.arquivos_bruto
 
 # COMMAND ----------
 
+# DBTITLE 1,Define Schema e Carrega CSV para DataFrame Bronze
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, StringType
 
@@ -113,6 +115,7 @@ df_bronze.display()
 
 # COMMAND ----------
 
+# DBTITLE 1,Adiciona timestamp e origem ao dataframe bronze final
 df_bronze_final = (
     df_bronze
     .withColumn("_ingestion_timestamp", F.current_timestamp())
@@ -161,6 +164,30 @@ PARTITIONED BY (Tipo_Titulo, Data_Vencimento)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### Explicação: PARTITIONED BY e PRIMARY KEY
+# MAGIC
+# MAGIC #### PARTITIONED BY (Tipo_Titulo, Data_Vencimento)
+# MAGIC
+# MAGIC O **particionamento** divide fisicamente a tabela Delta em subdiretórios baseados nos valores das colunas especificadas. Assim sendo cada combinação única de `Tipo_Titulo` e `Data_Vencimento` cria uma partição separada, logo queries que filtram por essas colunas (ex: `WHERE Tipo_Titulo = 'Tesouro IPCA+'`) leem apenas as partições relevantes, ignorando o resto dos dados (**partition pruning**)
+# MAGIC
+# MAGIC #### PRIMARY KEY (Tipo_Titulo, Data_Vencimento, Data_Base)
+# MAGIC
+# MAGIC A **chave primária** define a identidade única de cada registro, assim nenhuma linha pode ter valores duplicados para a combinação `(Tipo_Titulo, Data_Vencimento, Data_Base)`
+# MAGIC - **Obs:** O Delta Lake **não impõe** a restrição automaticamente (você precisa garantir na lógica de ingestão)
+# MAGIC
+# MAGIC **Neste pipeline**: a chave primária permite identificar registros já carregados e evitar duplicatas usando `left_anti` join (veja célula 19).
+# MAGIC
+# MAGIC #### Relação entre ambos
+# MAGIC
+# MAGIC Observe que as duas primeiras colunas da PRIMARY KEY (`Tipo_Titulo`, `Data_Vencimento`) são também as colunas de particionamento. Isso é uma prática comum:
+# MAGIC
+# MAGIC - Queries que buscam por chave primária se beneficiam do partition pruning
+# MAGIC - A terceira coluna `Data_Base` distingue múltiplas observações do mesmo título/vencimento ao longo do tempo 
+
+# COMMAND ----------
+
+# DBTITLE 1,Padroniza nomes das colunas conforme schema da tabela
 # Renomeia as colunas para seguir o schema da tabela, usando underscores e padronização.
 df_bronze_renamed = df_bronze_final.toDF(
     "Tipo_Titulo",
@@ -205,12 +232,13 @@ df_bronze_renamed.display()
 
 # COMMAND ----------
 
-df_bronze_renamed.display()
+# MAGIC %md
+# MAGIC ## Gravação incremental na tabela Bronze
+# MAGIC
 
 # COMMAND ----------
 
 # DBTITLE 1,Carrega os dados novos na tabela Bronze
-#
 # A operação de append insere apenas os registros novos, mantendo o histórico bruto e
 # preservando o dado original recebido da fonte.
 (
