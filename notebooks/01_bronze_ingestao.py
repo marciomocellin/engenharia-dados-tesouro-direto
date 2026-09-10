@@ -134,7 +134,7 @@ df_bronze_final.display()
 # COMMAND ----------
 
 # DBTITLE 1,Remove tabela preco taxa tesouro direto se existir
-# spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto")
+# spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_BRONZE}.preco_taxa_tesouro_direto") # Caso queira limpar a tabela Bronze
 
 # COMMAND ----------
 
