@@ -61,8 +61,8 @@ Ingestion* / upload de arquivos do Databricks Free Edition. A partir do Volume, 
 tabela Delta bruta `tesouro_direto.bronze.preco_taxa_tesouro_direto`, adicionando metadados de
 controle (`_ingestion_timestamp`, `_source_file`).
 
-> Adicione em `docs/screenshots/` a captura de tela do upload do arquivo para o Volume e da
-> tabela Bronze criada (ver `docs/screenshots/README.md`).
+![upload do arquivo para o Volume](docs/screenshots/upload_do_arquivo.png)
+![tabela Bronze](docs/screenshots/tabela_Bronze.png)
 
 ---
 

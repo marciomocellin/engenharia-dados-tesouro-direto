@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # 03 - Gold: Modelagem em Esquema Estrela
 # MAGIC
@@ -36,22 +40,52 @@ df_silver = spark.table(f"{CATALOG}.{SCHEMA_SILVER}.preco_taxa_tesouro_direto")
 
 # COMMAND ----------
 
+# DBTITLE 1,Célula 5
+spark.sql(f"""
+    CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_titulo (
+        sk_titulo BIGINT GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) COMMENT 'Chave substituta da dimensão título',
+        tipo_titulo STRING COMMENT 'Nome completo do tipo de título do Tesouro Direto',
+        indexador STRING COMMENT 'Indexador de rentabilidade: Selic, IPCA, Prefixado ou IGPM',
+        PRIMARY KEY (sk_titulo),
+        CONSTRAINT uk_tipo_titulo UNIQUE (tipo_titulo)
+    )
+    USING DELTA
+    COMMENT 'Dimensão de tipos de título do Tesouro Direto'
+    PARTITIONED BY (indexador)
+""")
+
+# COMMAND ----------
+
+existing_df = spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo").select("tipo_titulo").distinct()
+
 dim_titulo = (
-    df_silver.select("tipo_titulo").distinct()
+    df_silver.select("tipo_titulo").distinct().join(
+    existing_df,
+    on=["Tipo_Titulo"],
+    how="left_anti"
+)
     .withColumn(
         "indexador",
         F.when(F.col("tipo_titulo").contains("Selic"), F.lit("Selic"))
          .when(F.col("tipo_titulo").contains("IPCA"), F.lit("IPCA"))
-         .otherwise(F.lit("Prefixado")),
+         .when(F.col("tipo_titulo").contains("Prefixado"), F.lit("Prefixado"))
+         .when(F.col("tipo_titulo").contains("IGPM"), F.lit("IGPM"))
+         .otherwise(F.lit("IPCA")),
     )
-    .withColumn("sk_titulo", F.row_number().over(Window.orderBy("tipo_titulo")))
-    .select("sk_titulo", "tipo_titulo", "indexador")
 )
 
-(
-    dim_titulo.write.format("delta").mode("overwrite").option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo")
-)
+# COMMAND ----------
+
+# DBTITLE 1,Célula 6
+dim_titulo.createOrReplaceTempView("tmp_dim_titulo")
+spark.sql(f"""
+    INSERT INTO {CATALOG}.{SCHEMA_GOLD}.dim_titulo (tipo_titulo, indexador)
+    SELECT * FROM tmp_dim_titulo
+""")
+
+# COMMAND ----------
+
+display(spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo").limit(10))
 
 # COMMAND ----------
 
@@ -62,9 +96,35 @@ dim_titulo = (
 
 # COMMAND ----------
 
+# DBTITLE 1,Célula 10
+spark.sql(f"""
+    CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_GOLD}.dim_data (
+        sk_data INT COMMENT 'Chave substituta da dimensão data (formato yyyyMMdd)',
+        data DATE COMMENT 'Data base da cotação',
+        ano INT COMMENT 'Ano da data base',
+        mes INT COMMENT 'Mês da data base (1-12)',
+        trimestre INT COMMENT 'Trimestre da data base (1-4)',
+        dia_semana STRING COMMENT 'Dia da semana por extenso',
+        PRIMARY KEY (sk_data)
+    )
+    USING DELTA
+    PARTITIONED BY (ano)
+    COMMENT 'Dimensão de calendário com atributos temporais'
+""")
+
+# Filter to recent years when checking for existing dates to reduce partition scans
+current_year = F.year(F.current_date())
+existing_df = (
+    spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_data")
+    .filter(F.col("ano") >= current_year - 2)
+    .select("data")
+    .distinct()
+)
+
 dim_data = (
     df_silver.select(F.col("data_base").alias("data"))
     .distinct()
+    .join(existing_df, on=["data"], how="left_anti")
     .withColumn("ano", F.year("data"))
     .withColumn("mes", F.month("data"))
     .withColumn("trimestre", F.quarter("data"))
@@ -73,9 +133,21 @@ dim_data = (
     .select("sk_data", "data", "ano", "mes", "trimestre", "dia_semana")
 )
 
-(
-    dim_data.write.format("delta").mode("overwrite").option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.{SCHEMA_GOLD}.dim_data")
+dim_data.createOrReplaceTempView("tmp_dim_data")
+spark.sql(f"""
+    INSERT INTO TABLE {CATALOG}.{SCHEMA_GOLD}.dim_data
+    SELECT * FROM tmp_dim_data
+""")
+
+# COMMAND ----------
+
+# DBTITLE 1,Célula 12
+max_ano = spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_data").select(F.max("ano")).head()[0]
+display(
+    spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_data")
+    .filter(F.col("ano") == max_ano)
+    .orderBy(F.desc("data"))
+    .limit(10)
 )
 
 # COMMAND ----------
@@ -89,28 +161,56 @@ dim_data = (
 
 # COMMAND ----------
 
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria") # Caso queira limpar a tabela Bronze
+
+# COMMAND ----------
+
+# DBTITLE 1,Célula 12
+spark.sql(f"""
+    CREATE TABLE IF NOT EXISTS {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria (
+        sk_titulo BIGINT COMMENT 'Chave estrangeira para dim_titulo',
+        sk_data INT COMMENT 'Chave estrangeira para dim_data',
+        data_vencimento DATE COMMENT 'Data de vencimento do título',
+        prazo_dias INT COMMENT 'Prazo em dias entre data_base e data_vencimento',
+        taxa_compra_manha DECIMAL(10,6) COMMENT 'Taxa de compra na posição da manhã',
+        taxa_venda_manha DECIMAL(10,6) COMMENT 'Taxa de venda na posição da manhã',
+        pu_compra_manha DECIMAL(18,6) COMMENT 'Preço unitário de compra na manhã',
+        pu_venda_manha DECIMAL(18,6) COMMENT 'Preço unitário de venda na manhã',
+        pu_base_manha DECIMAL(18,6) COMMENT 'Preço unitário base na manhã',
+        PRIMARY KEY (sk_titulo, sk_data, data_vencimento),
+        CONSTRAINT fk_fato_titulo FOREIGN KEY (sk_titulo) REFERENCES {CATALOG}.{SCHEMA_GOLD}.dim_titulo(sk_titulo),
+        CONSTRAINT fk_fato_data FOREIGN KEY (sk_data) REFERENCES {CATALOG}.{SCHEMA_GOLD}.dim_data(sk_data)
+    )
+    USING DELTA
+    PARTITIONED BY (sk_titulo)
+    COMMENT 'Tabela fato com cotações diárias dos títulos do Tesouro Direto'
+""")
+existing_df = spark.table(f"{CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria").select("sk_titulo", "sk_data").distinct()
+
 fato_cotacao_diaria = (
     df_silver.alias("s")
-    .join(dim_titulo.alias("t"), on="tipo_titulo", how="left")
+    .join(spark.table(f"{CATALOG}.{SCHEMA_GOLD}.dim_titulo").alias("t"), on="tipo_titulo", how="left")
     .withColumn("sk_data", F.date_format(F.col("s.data_base"), "yyyyMMdd").cast("int"))
-    .withColumn("prazo_dias", F.datediff("data_vencimento", "data_base"))
+    .join(existing_df, on=["sk_titulo", "sk_data"], how="left_anti")
+    .withColumn("prazo_dias", F.datediff(F.col("s.data_vencimento"), F.col("s.data_base")))
     .select(
-        "sk_titulo",
+        F.col("t.sk_titulo").alias("sk_titulo"),
         "sk_data",
         F.col("s.data_vencimento").alias("data_vencimento"),
         "prazo_dias",
-        "taxa_compra_manha",
-        "taxa_venda_manha",
-        "pu_compra_manha",
-        "pu_venda_manha",
-        "pu_base_manha",
+        F.col("s.taxa_compra_manha").alias("taxa_compra_manha"),
+        F.col("s.taxa_venda_manha").alias("taxa_venda_manha"),
+        F.col("s.pu_compra_manha").alias("pu_compra_manha"),
+        F.col("s.pu_venda_manha").alias("pu_venda_manha"),
+        F.col("s.pu_base_manha").alias("pu_base_manha"),
     )
 )
 
-(
-    fato_cotacao_diaria.write.format("delta").mode("overwrite").option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria")
-)
+fato_cotacao_diaria.createOrReplaceTempView("tmp_fato_cotacao_diaria")
+spark.sql(f"""
+    INSERT INTO TABLE {CATALOG}.{SCHEMA_GOLD}.fato_cotacao_diaria
+    SELECT * FROM tmp_fato_cotacao_diaria
+""")
 
 # COMMAND ----------
 
