@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # 05 - Análise: Respondendo às perguntas do MVP
 # MAGIC
@@ -14,8 +18,7 @@ spark.sql("USE SCHEMA gold")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Pergunta 1 — Qual indexador (Selic, IPCA ou Prefixado) historicamente oferece a
-# MAGIC ## maior taxa de compra média?
+# MAGIC ## Pergunta 1 — Qual indexador (Selic, IPCA ou Prefixado) historicamente oferece a maior taxa de compra média?
 
 # COMMAND ----------
 

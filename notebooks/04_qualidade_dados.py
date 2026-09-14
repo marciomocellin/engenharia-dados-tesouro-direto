@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # 04 - Qualidade de Dados
 # MAGIC
@@ -15,8 +19,7 @@ df_silver = spark.table(f"{CATALOG}.silver.preco_taxa_tesouro_direto")
 
 # COMMAND ----------
 
-from pyspark.sql import functions as F
-
+# DBTITLE 1,Completude
 # MAGIC %md
 # MAGIC ## Completude
 # MAGIC
@@ -24,6 +27,7 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+from pyspark.sql import functions as F
 total = df_bronze.count()
 
 completude = df_bronze.select([
@@ -46,7 +50,7 @@ display(completude)
 # COMMAND ----------
 
 duplicatas = (
-    df_bronze.groupBy("Tipo Titulo", "Data Vencimento", "Data Base")
+    df_bronze.groupBy("Tipo_Titulo", "Data_Vencimento", "Data_Base")
     .count()
     .filter("count > 1")
 )
