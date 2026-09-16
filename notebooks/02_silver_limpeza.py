@@ -182,6 +182,7 @@ print(f"Linhas descartadas por qualidade: {linhas_antes - linhas_depois}")
 
 # COMMAND ----------
 
+# DBTITLE 1,Append and Preview Tesouro Direto Price and Rate Silver ...
 (
     df_silver.write
     .format("delta")
