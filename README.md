@@ -60,8 +60,10 @@ Ingestion* / upload de arquivos do Databricks Free Edition. A partir do Volume, 
 [`notebooks/01_bronze_ingestao.py`](notebooks/01_bronze_ingestao.py) lê o arquivo e grava a
 tabela Delta bruta `tesouro_direto.bronze.preco_taxa_tesouro_direto`, adicionando metadados de
 controle (`_ingestion_timestamp`, `_source_file`).
-
+#### Tela de carregamento do arquivo para o Volume.
 ![upload do arquivo para o Volume](docs/screenshots/upload_do_arquivo.png)
+
+#### Visualização da tabela na camada Bronze
 ![tabela Bronze](docs/screenshots/tabela_Bronze.png)
 
 ---
@@ -92,8 +94,9 @@ indexador, prazo e período de tempo.
 O catálogo completo, com descrição de cada tabela e cada campo, tipo de dado, domínio de
 valores e linhagem, está documentado em [`docs/catalogo_dados.md`](docs/catalogo_dados.md).
 
-> Adicione em `docs/screenshots/` capturas de tela do Unity Catalog mostrando os catálogos,
-> schemas (`bronze`, `silver`, `gold`) e tabelas criadas.
+#### Tela do Unity Catalog mostrando os catálogos, schemas (`bronze`, `silver`, `gold`) e tabelas criadas.
+![tabela Bronze](docs/screenshots/upload_do_arquivo.png)
+
 
 ---
 
