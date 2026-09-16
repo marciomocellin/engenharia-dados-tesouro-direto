@@ -68,7 +68,7 @@ print("Grupos de chave duplicada encontrados na Bronze:", duplicatas.count())
 # COMMAND ----------
 
 datas_invalidas = df_bronze.filter(
-    F.to_date(F.col("Data Base"), "dd/MM/yyyy").isNull() & F.col("Data Base").isNotNull()
+    F.to_date(F.col("Data_Base"), "dd/MM/yyyy").isNull() & F.col("Data_Base").isNotNull()
 ).count()
 print("Datas Base com formato inválido:", datas_invalidas)
 
@@ -88,8 +88,8 @@ stats = df_silver.select(
     F.mean("pu_base_manha").alias("media"), F.stddev("pu_base_manha").alias("desvio")
 ).first()
 
-limite_superior = stats["media"] + 3 * stats["desvio"]
-limite_inferior = stats["media"] - 3 * stats["desvio"]
+limite_superior = float(stats["media"]) + 3 * float(stats["desvio"])
+limite_inferior = float(stats["media"]) - 3 * float(stats["desvio"])
 
 outliers = df_silver.filter(
     (F.col("pu_base_manha") > limite_superior) | (F.col("pu_base_manha") < limite_inferior)
