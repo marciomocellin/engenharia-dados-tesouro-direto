@@ -95,7 +95,7 @@ O catálogo completo, com descrição de cada tabela e cada campo, tipo de dado,
 valores e linhagem, está documentado em [`docs/catalogo_dados.md`](docs/catalogo_dados.md).
 
 #### Tela do Unity Catalog mostrando os catálogos, schemas (`bronze`, `silver`, `gold`) e tabelas criadas.
-![tabela Bronze](docs/screenshots/upload_do_arquivo.png)
+![Unity Catalog](docs/screenshots/tela_unity_catalog.png)
 
 
 ---
