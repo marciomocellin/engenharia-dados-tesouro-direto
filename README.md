@@ -118,9 +118,13 @@ Cada transformação relevante está comentada diretamente no código do noteboo
 exemplo, a conversão de números com vírgula decimal para `double` e a remoção de duplicatas
 pela chave `(tipo_titulo, data_vencimento, data_base)`.
 
-> Adicione em `docs/screenshots/` capturas de tela da execução dos notebooks e das tabelas
-> Delta resultantes visíveis no catálogo (Databricks Catalog Explorer).
-
+### 4.1. Tabela prontas (Camada Gold)
+#### Dimenção de Data
+![Dimenção de Data](docs/screenshots/dimencao_data.png)
+#### Dimenção dos Títulos
+![Dimenção de Titulos](docs/screenshots/tabela_dimencao_titulo.png)
+#### Fato da Cotação diária
+![Dimenção de Data](docs/screenshots/cotacao_diaria.png)
 ---
 
 ## 5. Qualidade de Dados
