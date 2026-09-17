@@ -143,8 +143,6 @@ avaliou os seguintes atributos sobre a camada Bronze:
 Todos os critérios acima e as contagens de linhas afetadas são impressos como saída do
 próprio notebook de qualidade, servindo como evidência executável do processo.
 
-> Adicione em `docs/screenshots/` os resultados numéricos de cada verificação de qualidade.
-
 ---
 
 ## 6. Análise de Dados
@@ -166,10 +164,16 @@ na execução, junto dos screenshots):
    frente a mudanças na expectativa de juros, comparados à Selic (mais estável por definição).
 5. **Título com maior histórico:** indica o título mais consistentemente ofertado no período
    coberto pela base, útil para identificar séries históricas mais completas para estudo.
-
-> Complemente esta seção com os valores reais retornados pelas consultas e os screenshots dos
-> resultados obtidos na execução no Databricks, discutindo cada resposta obtida e conectando
-> as cinco respostas de volta ao problema de negócio (escolha de título para investimento).
+### 1. Indexador com maior taxa de compra média
+![pergunta 1](docs/screenshots/pergunta_1.png)
+### 2. Taxa por faixa de prazo
+![pergunta 2](docs/screenshots/pergunta_2.png)
+### 3. Evolução do PU por indexadora
+![pergunta 3](docs/screenshots/pergunta_3.png)
+### 4. Volatilidade do PU
+![pergunta 4](docs/screenshots/pergunta_4.png)
+### 5. Título com maior histórico
+![pergunta 5](docs/screenshots/pergunta_5.png)
 
 ---
 
