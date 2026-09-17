@@ -31,14 +31,14 @@ armazenados como texto (`string`).
 
 | Campo | Tipo | Descrição | Domínio / Observações |
 | --- | --- | --- | --- |
-| `Tipo Titulo` | string | Nome do título público (ex.: "Tesouro Selic 2029") | Texto livre, conforme fonte |
-| `Data Vencimento` | string | Data de vencimento do título, formato `dd/MM/yyyy` | Texto, convertido na Silver |
-| `Data Base` | string | Data de referência da cotação, formato `dd/MM/yyyy` | Texto, convertido na Silver |
-| `Taxa Compra Manha` | string | Taxa de compra (% a.a.), vírgula decimal | Texto, convertido na Silver |
-| `Taxa Venda Manha` | string | Taxa de venda (% a.a.), vírgula decimal | Texto, convertido na Silver |
-| `PU Compra Manha` | string | Preço Unitário de compra (R$), vírgula decimal | Texto, convertido na Silver |
-| `PU Venda Manha` | string | Preço Unitário de venda (R$), vírgula decimal | Texto, convertido na Silver |
-| `PU Base Manha` | string | Preço Unitário base (R$), vírgula decimal | Texto, convertido na Silver |
+| `Tipo_Titulo` | string | Nome do título público (ex.: "Tesouro Selic 2029") | Texto livre, conforme fonte |
+| `Data_Vencimento` | string | Data de vencimento do título, formato `dd/MM/yyyy` | Texto, convertido na Silver |
+| `Data_Base` | string | Data de referência da cotação, formato `dd/MM/yyyy` | Texto, convertido na Silver |
+| `Taxa_Compra_Manha` | string | Taxa de compra (% a.a.), vírgula decimal | Texto, convertido na Silver |
+| `Taxa_Venda_Manha` | string | Taxa de venda (% a.a.), vírgula decimal | Texto, convertido na Silver |
+| `PU_Compra_Manha` | string | Preço Unitário de compra (R$), vírgula decimal | Texto, convertido na Silver |
+| `PU_Venda_Manha` | string | Preço Unitário de venda (R$), vírgula decimal | Texto, convertido na Silver |
+| `PU_Base_Manha` | string | Preço Unitário base (R$), vírgula decimal | Texto, convertido na Silver |
 | `_ingestion_timestamp` | timestamp | Data/hora em que o registro foi carregado no Lakehouse | Metadado de controle |
 | `_source_file` | string | Nome do arquivo de origem | Metadado de controle |
 
@@ -56,11 +56,11 @@ armazenados como texto (`string`).
 | `tipo_titulo` | string | Nome do título público, sem espaços extras | Ex.: "Tesouro Selic", "Tesouro IPCA+", "Tesouro Prefixado" |
 | `data_vencimento` | date | Data de vencimento do título | >= `data_base` |
 | `data_base` | date | Data de referência da cotação | Datas do período disponibilizado pela fonte |
-| `taxa_compra_manha` | double | Taxa de compra (% a.a.) | Pode ser nula para títulos sem operação de compra no dia |
-| `taxa_venda_manha` | double | Taxa de venda (% a.a.) | Pode ser nula para títulos sem operação de venda no dia |
-| `pu_compra_manha` | double | Preço Unitário de compra (R$) | > 0 quando não nulo |
-| `pu_venda_manha` | double | Preço Unitário de venda (R$) | > 0 quando não nulo |
-| `pu_base_manha` | double | Preço Unitário base (R$) | Sempre > 0 (obrigatório, filtrado na limpeza) |
+| `taxa_compra_manha` | decimal(10,2) | Taxa de compra (% a.a.) | Pode ser nula para títulos sem operação de compra no dia |
+| `taxa_venda_manha` | decimal(10,2) | Taxa de venda (% a.a.) | Pode ser nula para títulos sem operação de venda no dia |
+| `pu_compra_manha` | decimal(10,2) | Preço Unitário de compra (R$) | > 0 quando não nulo |
+| `pu_venda_manha` | decimal(10,2) | Preço Unitário de venda (R$) | > 0 quando não nulo |
+| `pu_base_manha` | decimal(10,2) | Preço Unitário base (R$) | Sempre > 0 (obrigatório, filtrado na limpeza) |
 | `_ingestion_timestamp` | timestamp | Herdado da Bronze | Metadado de controle |
 | `_source_file` | string | Herdado da Bronze | Metadado de controle |
 
@@ -76,7 +76,7 @@ obrigatórios nulos ou preço unitário inválido.
 
 | Campo | Tipo | Descrição | Domínio / Observações |
 | --- | --- | --- | --- |
-| `sk_titulo` | int | Chave substituta (surrogate key) da dimensão | Sequencial, gerado via `row_number()` |
+| `sk_titulo` | bigint | Chave substituta (surrogate key) da dimensão | Sequencial, gerado via `GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1)` |
 | `tipo_titulo` | string | Nome do título público | Chave de negócio |
 | `indexador` | string | Classificação derivada do nome do título | Um de: `Selic`, `IPCA`, `Prefixado` |
 
@@ -109,15 +109,15 @@ pronta para responder às perguntas de negócio do MVP.
 
 | Campo | Tipo | Descrição | Domínio / Observações |
 | --- | --- | --- | --- |
-| `sk_titulo` | int | Chave estrangeira para `dim_titulo` | — |
+| `sk_titulo` | bigint | Chave estrangeira para `dim_titulo` | — |
 | `sk_data` | int | Chave estrangeira para `dim_data` (data base da cotação) | — |
 | `data_vencimento` | date | Data de vencimento do título nesta cotação | — |
 | `prazo_dias` | int | Diferença em dias entre `data_vencimento` e a data base | >= 0 esperado |
-| `taxa_compra_manha` | double | Taxa de compra (% a.a.) | Métrica |
-| `taxa_venda_manha` | double | Taxa de venda (% a.a.) | Métrica |
-| `pu_compra_manha` | double | Preço Unitário de compra (R$) | Métrica |
-| `pu_venda_manha` | double | Preço Unitário de venda (R$) | Métrica |
-| `pu_base_manha` | double | Preço Unitário base (R$) | Métrica |
+| `taxa_compra_manha` | decimal(10,6) | Taxa de compra (% a.a.) | Métrica |
+| `taxa_venda_manha` | decimal(10,6) | Taxa de venda (% a.a.) | Métrica |
+| `pu_compra_manha` | decimal(18,6) | Preço Unitário de compra (R$) | Métrica |
+| `pu_venda_manha` | decimal(18,6) | Preço Unitário de venda (R$) | Métrica |
+| `pu_base_manha` | decimal(18,6) | Preço Unitário base (R$) | Métrica |
 
 **Linhagem:** `silver.preco_taxa_tesouro_direto` `JOIN` `gold.dim_titulo` (por `tipo_titulo`),
 com `sk_data` calculado a partir de `data_base` e `prazo_dias` calculado via `datediff`.
