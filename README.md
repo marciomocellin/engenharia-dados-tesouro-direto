@@ -158,6 +158,8 @@ camada Gold. Resultados obtidos na execução no Databricks Free Edition:
    | IPCA | 6,21 | 83.434 |
    | Selic | 0,03 | 21.357 |
 
+![pergunta 1](docs/screenshots/pergunta_1.png)
+
 2. **Taxa por faixa de prazo:** contrariando a expectativa inicial de relação positiva
    entre prazo e taxa, o **curto prazo** apresentou a maior taxa média (7,98%), seguido do
    **longo prazo** (6,99%) e do **médio prazo** (6,74%). Esse resultado reflete a composição
@@ -171,6 +173,8 @@ camada Gold. Resultados obtidos na execução no Databricks Free Edition:
    | Longo prazo (> 5 anos) | 6,99 |
    | Médio prazo (2 a 5 anos) | 6,74 |
 
+![pergunta 2](docs/screenshots/pergunta_2.png)
+
 3. **Evolução do PU por indexador:** o PU médio dos títulos **Selic** cresce de forma
    acentuada e quase monotônica ao longo do período (de ~R$ 2.144 em 2004 a ~R$ 18.886 em
    2026), refletindo o acúmulo de juros pós-fixados. O **IGPM** também apresenta crescimento
@@ -178,6 +182,8 @@ camada Gold. Resultados obtidos na execução no Databricks Free Edition:
    ~R$ 2.450) e o **Prefixado** permanece relativamente estável em torno de R$ 800–1.000,
    pois títulos prefixados são emitidos próximos ao par e convergem ao valor de face no
    vencimento.
+
+![pergunta 3](docs/screenshots/pergunta_3.png)
 
 4. **Volatilidade do PU:** o **Selic** apresenta o maior desvio padrão do PU (4.889,95),
    seguido pelo IGPM (2.071,05), IPCA (1.178,35) e Prefixado (144,09). Esse resultado
@@ -193,6 +199,8 @@ camada Gold. Resultados obtidos na execução no Databricks Free Edition:
    | IPCA | 1.178,35 | 2.340,22 |
    | Prefixado | 144,09 | 893,30 |
 
+![pergunta 4](docs/screenshots/pergunta_4.png)
+
 5. **Título com maior histórico:** o **Tesouro IPCA+ com Juros Semestrais** possui o maior
    número de cotações (43.884), com registros de 31/12/2004 a 04/09/2026, indicando ser o
    título mais consistentemente ofertado no período coberto pela base.
@@ -205,15 +213,6 @@ camada Gold. Resultados obtidos na execução no Databricks Free Edition:
    | Tesouro Selic | 21.357 | 2004-12-31 | 2026-09-04 |
    | Tesouro IPCA+ | 18.780 | 2005-07-18 | 2026-09-04 |
 
-### 6.1. Indexador com maior taxa de compra média
-![pergunta 1](docs/screenshots/pergunta_1.png)
-### 6.2. Taxa por faixa de prazo
-![pergunta 2](docs/screenshots/pergunta_2.png)
-### 6.3. Evolução do PU por indexadora
-![pergunta 3](docs/screenshots/pergunta_3.png)
-### 6.4. Volatilidade do PU
-![pergunta 4](docs/screenshots/pergunta_4.png)
-### 6.5. Título com maior histórico
 ![pergunta 5](docs/screenshots/pergunta_5.png)
 
 ---
