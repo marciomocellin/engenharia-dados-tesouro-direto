@@ -139,21 +139,69 @@ próprio notebook de qualidade, servindo para possíveis auditorias e correçõe
 
 As consultas que respondem a cada pergunta estão no notebook
 [`notebooks/05_analise_perguntas.py`](notebooks/05_analise_perguntas.py), rodando sobre a
-camada Gold. Resumo esperado de discussão (a ser complementado com os números reais obtidos
-na execução, junto dos screenshots):
+camada Gold. Resultados obtidos na execução no Databricks Free Edition:
 
-1. **Indexador com maior taxa de compra média:** espera-se que títulos Prefixados e IPCA+
-   apresentem taxas médias mais altas que a Selic, refletindo o prêmio de risco por prazo e
-   por exposição à inflação/juro fixo.
-2. **Taxa por faixa de prazo:** espera-se relação positiva entre prazo e taxa (títulos de
-   longo prazo tendem a oferecer taxas maiores), compensando o investidor pelo risco de
-   mercado em prazos mais longos.
-3. **Evolução do PU por indexador:** o PU de títulos IPCA+ tende a ter menor volatilidade de
-   curto prazo que o Prefixado, pois seu componente real é mais estável.
-4. **Volatilidade do PU:** títulos Prefixados tendem a apresentar maior desvio padrão de PU
-   frente a mudanças na expectativa de juros, comparados à Selic (mais estável por definição).
-5. **Título com maior histórico:** indica o título mais consistentemente ofertado no período
-   coberto pela base, útil para identificar séries históricas mais completas para estudo.
+1. **Indexador com maior taxa de compra média:** o **Prefixado** apresenta a maior taxa de
+   compra média (11,55%), seguido pelo IGPM (6,52%), IPCA (6,21%) e Selic (0,03%). A taxa
+   do Tesouro Selic é próxima de zero porque representa o prêmio (spread) sobre a taxa
+   básica, que é quase nulo em condições normais de mercado. Os títulos Prefixados e IPCA+
+   confirmam a expectativa de taxas mais altas por incorporarem prêmio de risco por prazo e
+   exposição à inflação/juro fixo.
+
+   | Indexador | Taxa de compra média (%) | Qtd. cotações |
+   | --- | --- | --- |
+   | Prefixado | 11,55 | 55.291 |
+   | IGPM | 6,52 | 15.786 |
+   | IPCA | 6,21 | 83.434 |
+   | Selic | 0,03 | 21.357 |
+
+2. **Taxa por faixa de prazo:** contrariando a expectativa inicial de relação positiva
+   entre prazo e taxa, o **curto prazo** apresentou a maior taxa média (7,98%), seguido do
+   **longo prazo** (6,99%) e do **médio prazo** (6,74%). Esse resultado reflete a composição
+   dos indexadores em cada faixa: títulos de curto prazo incluem uma proporção maior de
+   Prefixados (taxa média elevada), enquanto o médio prazo concentra títulos Selic e IPCA
+   com taxas mais baixas.
+
+   | Faixa de prazo | Taxa de compra média (%) |
+   | --- | --- |
+   | Curto prazo (≤ 2 anos) | 7,98 |
+   | Longo prazo (> 5 anos) | 6,99 |
+   | Médio prazo (2 a 5 anos) | 6,74 |
+
+3. **Evolução do PU por indexador:** o PU médio dos títulos **Selic** cresce de forma
+   acentuada e quase monotônica ao longo do período (de ~R$ 2.144 em 2004 a ~R$ 18.886 em
+   2026), refletindo o acúmulo de juros pós-fixados. O **IGPM** também apresenta crescimento
+   expressivo (de ~R$ 1.792 a ~R$ 7.636). O **IPCA** sobe de forma moderada (de ~R$ 1.231 a
+   ~R$ 2.450) e o **Prefixado** permanece relativamente estável em torno de R$ 800–1.000,
+   pois títulos prefixados são emitidos próximos ao par e convergem ao valor de face no
+   vencimento.
+
+4. **Volatilidade do PU:** o **Selic** apresenta o maior desvio padrão do PU (4.889,95),
+   seguido pelo IGPM (2.071,05), IPCA (1.178,35) e Prefixado (144,09). Esse resultado
+   contraria a expectativa inicial — a elevada dispersão do Selic decorre do acúmulo
+   contínuo de juros ao longo de mais de 20 anos, que amplia a amplitude dos valores de PU
+   na série histórica, e não de instabilidade de mercado. O Prefixado, por convergir ao
+   valor de face, apresenta a menor volatilidade.
+
+   | Indexador | Desvio padrão do PU | PU médio |
+   | --- | --- | --- |
+   | Selic | 4.889,95 | 7.930,35 |
+   | IGPM | 2.071,05 | 3.582,95 |
+   | IPCA | 1.178,35 | 2.340,22 |
+   | Prefixado | 144,09 | 893,30 |
+
+5. **Título com maior histórico:** o **Tesouro IPCA+ com Juros Semestrais** possui o maior
+   número de cotações (43.884), com registros de 31/12/2004 a 04/09/2026, indicando ser o
+   título mais consistentemente ofertado no período coberto pela base.
+
+   | Tipo de título | Qtd. cotações | Primeira cotação | Última cotação |
+   | --- | --- | --- | --- |
+   | Tesouro IPCA+ com Juros Semestrais | 43.884 | 2004-12-31 | 2026-09-04 |
+   | Tesouro Prefixado | 28.080 | 2004-12-31 | 2026-09-04 |
+   | Tesouro Prefixado com Juros Semestrais | 27.211 | 2004-12-31 | 2026-09-04 |
+   | Tesouro Selic | 21.357 | 2004-12-31 | 2026-09-04 |
+   | Tesouro IPCA+ | 18.780 | 2005-07-18 | 2026-09-04 |
+
 ### 6.1. Indexador com maior taxa de compra média
 ![pergunta 1](docs/screenshots/pergunta_1.png)
 ### 6.2. Taxa por faixa de prazo
