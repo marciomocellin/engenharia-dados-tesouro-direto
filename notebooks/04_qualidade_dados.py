@@ -108,5 +108,5 @@ print(f"Outliers de PU Base Manha (fora de 3 desvios padrão): {outliers}")
 # MAGIC | `tipo_titulo`, `data_base` ou `data_vencimento` nulos | Linha descartada (sem valor analítico) |
 # MAGIC | Datas em formato inesperado | Convertidas para `null` via `to_date` com máscara `dd/MM/yyyy`, depois descartadas |
 # MAGIC | Números com vírgula decimal (padrão BR) | Convertidos para `double` com `.` como separador |
-# MAGIC | `pu_base_manha` nulo ou <= 0 | Linha descartada, pois preço unitário não pode ser nulo/negativo |
+# MAGIC | `pu_base_manha` nulo | Linha descartada, pois preço unitário base é obrigatório; valores iguais a 0 são preservados (truncamento de valores extremamente baixos) |
 # MAGIC | Espaços extras em `tipo_titulo` | `trim()` aplicado para padronizar |

@@ -60,7 +60,7 @@ armazenados como texto (`string`).
 | `taxa_venda_manha` | decimal(10,2) | Taxa de venda (% a.a.) | Pode ser nula para títulos sem operação de venda no dia |
 | `pu_compra_manha` | decimal(10,2) | Preço Unitário de compra (R$) | > 0 quando não nulo |
 | `pu_venda_manha` | decimal(10,2) | Preço Unitário de venda (R$) | > 0 quando não nulo |
-| `pu_base_manha` | decimal(10,2) | Preço Unitário base (R$) | Sempre > 0 (obrigatório, filtrado na limpeza) |
+| `pu_base_manha` | decimal(10,2) | Preço Unitário base (R$) | Sempre não nulo (obrigatório, filtrado na limpeza); valores iguais a 0 sao preservados (truncamento de valores extremamente baixos) |
 | `_ingestion_timestamp` | timestamp | Herdado da Bronze | Metadado de controle |
 | `_source_file` | string | Herdado da Bronze | Metadado de controle |
 
@@ -78,7 +78,7 @@ obrigatórios nulos ou preço unitário inválido.
 | --- | --- | --- | --- |
 | `sk_titulo` | bigint | Chave substituta (surrogate key) da dimensão | Sequencial, gerado via `GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1)` |
 | `tipo_titulo` | string | Nome do título público | Chave de negócio |
-| `indexador` | string | Classificação derivada do nome do título | Um de: `Selic`, `IPCA`, `Prefixado` |
+| `indexador` | string | Classificação derivada do nome do título | Um de: `Selic`, `IPCA`, `Prefixado`, `IGPM` |
 
 **Linhagem:** `silver.preco_taxa_tesouro_direto.tipo_titulo` (valores distintos) + regra de
 classificação por palavra-chave no nome do título.

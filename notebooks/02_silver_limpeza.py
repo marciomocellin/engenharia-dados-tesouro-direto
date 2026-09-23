@@ -113,7 +113,7 @@ existing_df = spark.table(f"{CATALOG}.{SCHEMA_SILVER}.preco_taxa_tesouro_direto"
 # e preserva a idempotência da ingestão.
 df_silver = df_silver.join(
     existing_df,
-    on=["Tipo_Titulo", "Data_Vencimento", "Data_Base"],
+    on=["tipo_titulo", "data_vencimento", "data_base"],
     how="left_anti"
 )
 

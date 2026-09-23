@@ -24,12 +24,12 @@ O Tesouro Direto é o programa do governo federal para venda de títulos públic
 
 ### 1.2. Perguntas de negócio
 
-1. Qual indexador (Selic, IPCA ou Prefixado) historicamente oferece a maior taxa de compra
-   média?
+1. Qual indexador (Selic, IPCA, Prefixado ou IGPM) historicamente oferece a maior taxa de
+   compra média?
 2. Como a taxa de rentabilidade oferecida varia conforme o prazo até o vencimento do título (curto, médio ou longo prazo)?
-3. Como o Preço Unitário (PU) dos títulos evoluiu ao longo do tempo, comparando os três
+3. Como o Preço Unitário (PU) dos títulos evoluiu ao longo do tempo, comparando os
    indexadores?
-4. Existe diferença de volatilidade do PU entre os indexadores (Selic, IPCA, Prefixado)?
+4. Existe diferença de volatilidade do PU entre os indexadores (Selic, IPCA, Prefixado, IGPM)?
 5. Qual título possui o maior histórico de cotações disponível na base?
 
 ### 1.3. Contexto dos dados brutos
@@ -48,7 +48,7 @@ O Tesouro Direto é o programa do governo federal para venda de títulos públic
 ### 1.4. Definição de Conceitos
 
 - **Título**: um título público emitido pelo Tesouro Nacional, com prazo de vencimento e indexador definidos. Ex.: Tesouro Prefixado 2025, Tesouro IPCA+ 2035, Tesouro Selic 2027.
-- **Indexador**: o índice que define a rentabilidade do título. Pode ser Prefixado (taxa fixa), IPCA+ (indexado à inflação) ou Selic (indexado à taxa básica de juros).
+- **Indexador**: o índice que define a rentabilidade do título. Pode ser Prefixado (taxa fixa), IPCA+ (indexado à inflação), Selic (indexado à taxa básica de juros) ou IGPM+ (indexado ao IGP-M).
 - **Data Vencimento**: a data em que o título expira e o investidor recebe o valor corrigido pelo indexador mais a taxa contratada.
 - **Data Base**: a data em que a cotação do título foi registrada.
 
@@ -130,7 +130,7 @@ avaliou os seguintes atributos sobre a camada Bronze:
 | Completude | % de nulos/vazios por coluna | Algumas linhas sem `Taxa Compra/Venda Manha` (dias sem operação de compra/venda de um título) | Mantidas, pois taxa/PU de compra ou venda podem legitimamente não existir em um dia; apenas `pu_base_manha` é obrigatório |
 | Consistência | Formato de data (`dd/MM/yyyy`) e de número (vírgula decimal) | Nenhuma inconsistência de formato encontrada na amostra validada | Conversão explícita de tipo (`to_date`, `regexp_replace` + `cast`) como salvaguarda |
 | Unicidade | Duplicatas pela chave `(tipo_titulo, data_vencimento, data_base)` | Poucas linhas duplicadas identificadas | `dropDuplicates` na chave de negócio |
-| Acurácia | `pu_base_manha` deve ser positivo | Registros nulos ou com `pu_base_manha` <= 0 | Linhas descartadas via filtro |
+| Acurácia | `pu_base_manha` deve ser não nulo | Registros com `pu_base_manha` nulo | Linhas descartadas via filtro; valores iguais a 0 são preservados (truncamento de valores extremamente baixos, ver justificativa no notebook Silver) |
 | Outliers | PU fora de 3 desvios padrão da média por indexador | Oscilações pontuais de mercado observadas, dentro do esperado para títulos de renda variável indexados a preços | Mantidos (não são erro de dados, refletem o mercado); apenas monitorados |
 
 Todos os critérios acima e as contagens de linhas afetadas são impressos como saída do
