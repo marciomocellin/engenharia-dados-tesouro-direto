@@ -221,24 +221,27 @@ camada Gold. Resultados obtidos na execução no Databricks Free Edition:
 
 Este MVP entrega o ciclo completo de um pipeline de dados na nuvem: definição de objetivo,
 coleta para um Volume do Unity Catalog, modelagem em Esquema Estrela documentada em um
-catálogo de dados, pipeline de ETL dividido em notebooks Bronze/Silver/Gold, análise de
-qualidade e análise que respondem às perguntas de negócio propostas.
+catálogo de dados, pipeline de ETL dividido em notebooks Bronze/Silver/Gold, verificação de
+qualidade e análises que respondem às perguntas de negócio propostas.
 
-O meu objetivo com esse MVP era demonstrar a minha capacidade de construir um pipeline de dados completo,
-por isso escolhi trabalhar com um conjunto de dados conhecido e relativamente simples. Eu já havia utilisado
-os dados do Tesouro Direto as outras sprints desse curso, então pude estruturar as perguntas de negócio de
-forma a explorar diferentes aspectos da engenharia de dados, como forma de praticar os conteúdos aprendidos.
+Meu objetivo com este MVP foi demonstrar a capacidade de construir um pipeline de dados
+completo. Por isso, escolhi trabalhar com um conjunto de dados conhecido e relativamente
+simples — já havia utilizado os dados do Tesouro Direto nas outras sprints do curso, então
+pude estruturar as perguntas de negócio de forma a explorar diferentes aspectos da engenharia
+de dados e praticar os conteúdos aprendidos.
 
-**O que foi atingido:** Pratiquei e desemvolvi os conhecimentos adiquiridos durante essa sprint e isso me
-permitiu responder todas as cinco perguntas propostas, com consultas implementadas sobre a camada Gold.
-Além disso, criei rotinas para poder observar os principais problemas de qualidade de dados esperados
-para este conjunto (duplicatas, tipos como texto, valores nulos) foram tratados na camada
-Silver.
+**O que foi atingido:** Pratiquei e desenvolvi os conhecimentos adquiridos durante a sprint,
+o que me permitiu responder a todas as cinco perguntas propostas, com consultas implementadas
+sobre a camada Gold. Além disso, criei rotinas para observar os principais problemas de
+qualidade de dados esperados para este conjunto (duplicatas, tipos como texto e valores
+nulos), que foram tratados na camada Silver.
 
-**Dificuldades e limitações:** O unico problema foi não haver acesso direto a internet em um
-workspace do **Databricks Free Edition** neste. Isso não permitiu que eu automatizasse a ingestão
-de dados do Tesouro Direto, então tive que baixar o arquivo manualmente e fazer o upload para o Volume.
-O que foi meio frustrante, pois consegui automatizar a ingestão de dados em outros MVP's dessa pós-graduação.
+**Dificuldades e limitações:** O único problema foi a ausência de acesso direto à internet em
+um workspace do **Databricks Free Edition**. Isso impediu a automação da ingestão de dados
+do Tesouro Direto, sendo necessário baixar o arquivo manualmente e fazer o upload para o
+Volume — uma limitação frustrante, pois em outros MVPs da pós-graduação consegui automatizar
+a ingestão de dados.
 
-**Trabalhos futuros:** Pretendo explorar as ferramentas de machine learning do Databricks para tentar prever a taxa
-de compra de um título com base em seu indexador e prazo até o vencimento, assim como explorar a utilização de LLM's e embaddings desse ambiente.
+**Trabalhos futuros:** Pretendo explorar as ferramentas de machine learning do Databricks
+para prever a taxa de compra de um título com base em seu indexador e prazo até o
+vencimento, bem como investigar a utilização de LLMs e embeddings nesse ambiente.
