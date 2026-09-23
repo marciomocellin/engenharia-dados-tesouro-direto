@@ -111,10 +111,13 @@ exemplo, a conversão de números com vírgula decimal para `decimal(, )` e a re
 ### 4.1. Tabelas prontas (Camada Gold)
 #### Dimensão de Data
 ![Dimensão de Data](docs/screenshots/dimencao_data.png)
+
 #### Dimensão dos Títulos
 ![Dimensão de Titulos](docs/screenshots/tabela_dimencao_titulo.png)
+
 #### Fato da Cotação diária
 ![Fato da Cotação diária](docs/screenshots/cotacao_diaria.png)
+
 ---
 
 ## 5. Qualidade de Dados
